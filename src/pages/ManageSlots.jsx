@@ -80,29 +80,42 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
 
   const handleAddFunding = (e) => {
     e.preventDefault();
+    
+    // Valider le nom
     if (!activityName.trim()) {
       toast.error("Veuillez entrer un nom d'activité.");
       return;
     }
-    const amount = parseFloat(fundingAmount) || 0;
-    const goal = parseFloat(fundingGoal) || 0;
     
+    // Convertir en nombres
+    const amount = Number.parseFloat(fundingAmount) || 0;
+    const goal = Number.parseFloat(fundingGoal) || 0;
+    
+    // Valider l'objectif
     if (goal < 10 || goal > 1000000) {
       toast.error("L'objectif doit être entre 10 et 1 000 000 €.");
       return;
     }
     
+    // Valider le montant
     if (amount < 0) {
       toast.error("Le montant ne peut pas être négatif.");
       return;
     }
     
+    if (amount > goal) {
+      toast.error("Le montant collecté ne peut pas dépasser l'objectif.");
+      return;
+    }
+    
+    // Envoyer les données (SANS is_funded)
     onAddFunding({
-      activity_name: activityName,
+      activity_name: activityName.trim(),
       amount: amount,
       goal: goal,
-      is_funded: amount >= goal,
     });
+    
+    // Réinitialiser le formulaire
     setActivityName("");
     setFundingAmount("0");
     setFundingGoal("500");
@@ -274,14 +287,22 @@ export default function ManageSlots() {
     onError: () => toast.error("Impossible de supprimer ce créneau."),
   });
 
-  const createFundingMutation = useMutation({
-    mutationFn: (data) => api.fundings.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fundings"] });
-      toast.success("Financement ajouté ! 🎯");
-    },
-    onError: () => toast.error("Impossible d'ajouter le financement."),
-  });
+const createFundingMutation = useMutation({
+  mutationFn: (data) => {
+    console.log("📤 Envoi financement:", data);
+    return api.fundings.create(data);
+  },
+  onSuccess: (data) => {
+    console.log("✅ Financement créé:", data);
+    queryClient.invalidateQueries({ queryKey: ["fundings"] });
+    toast.success("Financement ajouté ! 🎯");
+  },
+  onError: (error) => {
+    console.error("❌ Erreur:", error);
+    // Afficher le message d'erreur détaillé
+    toast.error(`Impossible d'ajouter le financement: ${error.message}`);
+  },
+});
 
   const deleteFundingMutation = useMutation({
     mutationFn: (id) => api.fundings.delete(id),
