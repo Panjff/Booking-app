@@ -158,11 +158,11 @@ export default function CalendarView({
 
       <div className="mt-4 pt-4 border-t border-border flex items-center justify-center gap-6">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <div className="w-3 h-3 rounded-full bg-pink-500" />
           <span className="text-xs text-muted-foreground">Créneaux disponibles</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-pink-500" />
+          <div className="w-3 h-3 rounded-full  bg-blue-500"/>
           <span className="text-xs text-muted-foreground">Activités à financer</span>
         </div>
       </div>
