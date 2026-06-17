@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 import Database from "better-sqlite3";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -220,8 +221,31 @@ function writeDb(data) {
   persist();
 }
 
+function seedAdminIfNeeded() {
+  const adminExists = sqlite.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'").get().count > 0;
+  if (adminExists) return;
+
+  const adminEmail = process.env.ADMIN_EMAIL || "emilie.tall@gmail.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "Mytime2026";
+
+  sqlite.prepare(`
+    INSERT INTO users (id, email, name, passwordHash, role, createdAt)
+    VALUES (@id, @email, @name, @passwordHash, @role, @createdAt)
+  `).run({
+    id: crypto.randomUUID(),
+    email: adminEmail,
+    name: adminEmail.split("@")[0],
+    passwordHash: bcrypt.hashSync(adminPassword, 10),
+    role: "admin",
+    createdAt: new Date().toISOString(),
+  });
+
+  console.log(`[seed] Compte admin créé : ${adminEmail}`);
+}
+
 createTables();
 migrateJsonIfNeeded();
+seedAdminIfNeeded();
 
 export function newId() {
   return crypto.randomUUID();
