@@ -33,15 +33,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (_req, res) => {
-  res.json({
-    ok: true,
-    message: "API Booking-app disponible",
-    frontend:
-      "Client Vite attendu sur http://localhost:5173 en développement. Exécutez npm run build pour servir dist depuis le backend.",
-  });
-});
-
 function publicUser(user) {
   return { id: user.id, email: user.email, role: user.role, name: user.name };
 }
