@@ -122,23 +122,22 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {bookingType === BOOKING_TYPES.FUNDING && (
-              <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                      Avertissement important
-                    </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-                      Le paiement effectué dans le cadre du financement d'une activité ne garantit aucunement 
-                      une quelconque prestation, service ou résultat de la part d'Émilie. Ce financement est 
-                      un soutien volontaire au projet, sans contrepartie obligatoire.
-                    </p>
-                  </div>
+            {/* Avertissement affiché pour les deux types */}
+            <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                    Avertissement important
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                    Le paiement effectué dans le cadre de cette réservation ne garantit aucunement 
+                    une quelconque prestation, service ou résultat de la part d'Émilie. Ce paiement est 
+                    un soutien volontaire au projet, sans contrepartie obligatoire.
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
