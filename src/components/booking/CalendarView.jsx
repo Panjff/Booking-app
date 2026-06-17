@@ -41,10 +41,10 @@ export default function CalendarView({
     const isFund = fundingDates.has(dateStr);
     
     if (bookingType === "funding") {
-      return isFund ? "pink" : "none";
+      return isFund ? "blue" : "none";  // Inversé : funding → bleu
     }
-    if (isAvail) return "blue";
-    if (isFund) return "pink";
+    if (isAvail) return "pink";  // Inversé : disponibilité → rose
+    if (isFund) return "blue";   // Inversé : funding → bleu
     return "none";
   };
 
@@ -58,17 +58,7 @@ export default function CalendarView({
     if (past) {
       return `${baseClasses} text-muted-foreground/40 cursor-not-allowed`;
     }
-    if (color === "blue") {
-      if (isSelected) {
-        return `${baseClasses} bg-blue-500 text-white shadow-lg shadow-blue-500/25 cursor-pointer`;
-      }
-      if (today) {
-        return `${baseClasses} ring-2 ring-blue-500/50 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer`;
-      }
-      return `${baseClasses} text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-bold cursor-pointer`;
-    }
-    
-    if (color === "pink") {
+    if (color === "pink") {  // Inversé : maintenant rose = disponible
       if (isSelected) {
         return `${baseClasses} bg-pink-500 text-white shadow-lg shadow-pink-500/25 cursor-pointer`;
       }
@@ -76,6 +66,16 @@ export default function CalendarView({
         return `${baseClasses} ring-2 ring-pink-500/50 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-950/30 cursor-pointer`;
       }
       return `${baseClasses} text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-950/30 font-bold cursor-pointer`;
+    }
+    
+    if (color === "blue") {  // Inversé : maintenant bleu = funding
+      if (isSelected) {
+        return `${baseClasses} bg-blue-500 text-white shadow-lg shadow-blue-500/25 cursor-pointer`;
+      }
+      if (today) {
+        return `${baseClasses} ring-2 ring-blue-500/50 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer`;
+      }
+      return `${baseClasses} text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-bold cursor-pointer`;
     }
     if (today) {
       return `${baseClasses} ring-2 ring-primary/30 text-foreground cursor-default`;
@@ -120,8 +120,8 @@ export default function CalendarView({
           const today = isToday(d);
           const clickable = isDateClickable(d, isCurrentMonth, past);
           const color = getDateColor(d);
-          const hasBlue = availableDates.has(format(d, "yyyy-MM-dd"));
-          const hasPink = fundingDates.has(format(d, "yyyy-MM-dd"));
+          const hasPink = availableDates.has(format(d, "yyyy-MM-dd"));  // Inversé : rose = disponible
+          const hasBlue = fundingDates.has(format(d, "yyyy-MM-dd"));    // Inversé : bleu = funding
 
           return (
             <motion.button
@@ -133,22 +133,22 @@ export default function CalendarView({
               className={getDateClasses(d, isCurrentMonth, past, isSelected, today)}
             >
               {d.getDate()}
-              {isCurrentMonth && !past && (hasBlue || hasPink) && (
+              {isCurrentMonth && !past && (hasPink || hasBlue) && (
                 <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-                  {hasBlue && (
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      isSelected && color === "blue" ? "bg-white" : "bg-blue-500"
-                    }`} />
-                  )}
                   {hasPink && (
                     <span className={`w-1.5 h-1.5 rounded-full ${
                       isSelected && color === "pink" ? "bg-white" : "bg-pink-500"
                     }`} />
                   )}
+                  {hasBlue && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      isSelected && color === "blue" ? "bg-white" : "bg-blue-500"
+                    }`} />
+                  )}
                 </div>
               )}
               
-              {today && !hasBlue && !hasPink && isCurrentMonth && (
+              {today && !hasPink && !hasBlue && isCurrentMonth && (
                 <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary/50" />
               )}
             </motion.button>
@@ -158,11 +158,11 @@ export default function CalendarView({
 
       <div className="mt-4 pt-4 border-t border-border flex items-center justify-center gap-6">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-pink-500" />
+          <div className="w-3 h-3 rounded-full bg-pink-500" />  {/* Inversé : rose = créneaux disponibles */}
           <span className="text-xs text-muted-foreground">Créneaux disponibles</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full  bg-blue-500"/>
+          <div className="w-3 h-3 rounded-full bg-blue-500" />  {/* Inversé : bleu = activités à financer */}
           <span className="text-xs text-muted-foreground">Activités à financer</span>
         </div>
       </div>
