@@ -27,24 +27,19 @@ export async function apiFetch(path, options = {}) {
   const baseUrl = import.meta.env.VITE_API_URL || "/api";
   const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   const res = await fetch(`${normalizedBaseUrl}${path}`, { ...options, headers });
-  
-  // Lire le texte d'abord
   const text = await res.text();
-  
-  // Vérifier si la réponse est vide
-  if (!text || text.trim() === '') {
+  if (!text || text.trim() === "") {
     if (!res.ok) {
-      throw new ApiError(res.statusText || 'Erreur serveur', res.status);
+      throw new ApiError(res.statusText || "Erreur serveur", res.status);
     }
-    return {}; // Réponse vide mais OK (204 No Content)
+    return {};
   }
 
-  // Essayer de parser le JSON
   let data;
   try {
     data = JSON.parse(text);
   } catch (e) {
-    console.error('Erreur de parsing JSON:', text);
+    console.error("Erreur de parsing JSON:", text);
     throw new ApiError(`Réponse invalide du serveur: ${text.substring(0, 100)}`, res.status);
   }
 
@@ -66,7 +61,6 @@ export const api = {
     bulkCreate: (data) => apiFetch("/slots/bulk", { method: "POST", body: JSON.stringify(data) }),
     delete: (id) => apiFetch(`/slots/${id}`, { method: "DELETE" }),
   },
-  // ✅ Gestion des financements
   fundings: {
     list: () => apiFetch("/fundings"),
     create: (data) => apiFetch("/fundings", { method: "POST", body: JSON.stringify(data) }),

@@ -28,19 +28,16 @@ export default function Home() {
 
   const queryClient = useQueryClient();
 
-  // Récupérer les créneaux
   const { data: allSlots = [], isLoading: slotsLoading } = useQuery({
     queryKey: ["timeSlots"],
     queryFn: () => api.slots.list(),
   });
 
-  // Récupérer les financements
   const { data: allFundings = [], isLoading: fundingsLoading } = useQuery({
     queryKey: ["fundings"],
     queryFn: () => api.fundings.list(),
   });
 
-  // Dates disponibles pour les créneaux
   const availableDates = useMemo(() => {
     const dates = new Set();
     allSlots.forEach((s) => {
@@ -49,7 +46,6 @@ export default function Home() {
     return dates;
   }, [allSlots]);
 
-  // Dates disponibles pour les financements
   const fundingDates = useMemo(() => {
     const dates = new Set();
     allFundings.forEach((f) => {
@@ -59,14 +55,11 @@ export default function Home() {
   }, [allFundings]);
 
   const dateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
-  
-  // Créneaux pour la date sélectionnée
   const daySlots = useMemo(() => {
     if (!dateStr) return [];
     return allSlots.filter((s) => s.date === dateStr);
   }, [allSlots, dateStr]);
 
-  // Financements pour la date sélectionnée
   const dayFundings = useMemo(() => {
     if (!dateStr) return [];
     return allFundings.filter((f) => f.date === dateStr || !f.date);
@@ -129,7 +122,6 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Avertissement pour les financements */}
             {bookingType === BOOKING_TYPES.FUNDING && (
               <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
                 <div className="flex items-start gap-3">
@@ -150,7 +142,6 @@ export default function Home() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
-                {/* Sélecteur de type de réservation */}
                 <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
                   <div className="grid grid-cols-2 gap-3">
                     <button
@@ -290,7 +281,6 @@ function StepIndicator({ currentStep }) {
   );
 }
 
-// Composant pour sélectionner un financement
 function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFunding, isLoading }) {
   if (isLoading) {
     return (

@@ -15,11 +15,8 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <Routes>
-            {/* Routes publiques */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
-            
-            {/* Routes protégées (admin uniquement) */}
             <Route
               path="/manage"
               element={
@@ -28,8 +25,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
-            {/* Page 404 */}
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>

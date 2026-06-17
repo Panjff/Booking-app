@@ -11,7 +11,6 @@ import { api } from "@/api/client";
 
 const isPayPalConfigured = Boolean(import.meta.env.VITE_PAYPAL_CLIENT_ID);
 
-// ---------- Formulaire PayPal ----------
 function PayPalCheckoutForm({ item, clientInfo, bookingType, onSuccess }) {
   const [error, setError] = useState(null);
 
@@ -68,7 +67,6 @@ function PayPalCheckoutForm({ item, clientInfo, bookingType, onSuccess }) {
   );
 }
 
-// ---------- Mode démo ----------
 function DemoPaymentForm({ item, clientInfo, bookingType, onSuccess, onBack }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
@@ -125,7 +123,6 @@ function DemoPaymentForm({ item, clientInfo, bookingType, onSuccess, onBack }) {
   );
 }
 
-// ---------- Composant principal ----------
 export default function PaymentStep({ slot, funding, clientInfo, bookingType = "slot", onSuccess, onBack }) {
   const item = bookingType === "funding" ? funding : slot;
   const amount = item?.price || item?.goal || 50;
@@ -136,7 +133,6 @@ export default function PaymentStep({ slot, funding, clientInfo, bookingType = "
       animate={{ opacity: 1, x: 0 }}
       className="bg-card rounded-2xl shadow-sm border border-border p-5 md:p-6"
     >
-      {/* Header */}
       <div className="flex items-center gap-2 mb-5">
         <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-8 w-8">
           <ArrowLeft className="w-4 h-4" />
@@ -146,7 +142,6 @@ export default function PaymentStep({ slot, funding, clientInfo, bookingType = "
         </h3>
       </div>
 
-      {/* Récapitulatif */}
       <div className="bg-accent/60 rounded-xl p-4 mb-5">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-muted-foreground">
@@ -179,7 +174,6 @@ export default function PaymentStep({ slot, funding, clientInfo, bookingType = "
         </div>
       </div>
 
-      {/* Paiement */}
       {isPayPalConfigured ? (
         <PayPalScriptProvider
           options={{

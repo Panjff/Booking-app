@@ -73,7 +73,6 @@ function ShareLinkCard() {
   );
 }
 
-// Composant pour le financement d'activité
 function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isLoading }) {
   const [activityName, setActivityName] = useState("");
   const [fundingAmount, setFundingAmount] = useState("0");
@@ -118,8 +117,6 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
       <h2 className="font-bold text-foreground flex items-center gap-2">
         <Target className="w-4 h-4 text-primary" /> Financement d'activités
       </h2>
-      
-      {/* Stats de financement */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-accent/30 rounded-xl p-3 text-center">
           <p className="text-xl font-extrabold text-primary">€{totalFunded}</p>
@@ -131,7 +128,6 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
         </div>
       </div>
 
-      {/* Barre de progression */}
       {totalGoal > 0 && (
         <div className="space-y-1">
           <div className="w-full bg-muted rounded-full h-2.5">
@@ -146,7 +142,6 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
         </div>
       )}
 
-      {/* Formulaire d'ajout */}
       <form onSubmit={handleAddFunding} className="space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1.5">
@@ -198,7 +193,6 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
         </Button>
       </form>
 
-      {/* Liste des financements */}
       {fundings.length > 0 && (
         <div className="space-y-2 mt-2">
           <h4 className="text-sm font-semibold text-muted-foreground">Financements en cours</h4>
@@ -238,7 +232,6 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
         </div>
       )}
 
-      {/* Clause de non-garantie */}
       <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
@@ -267,19 +260,16 @@ export default function ManageSlots() {
 
   const queryClient = useQueryClient();
 
-  // Récupérer les créneaux
   const { data: slots = [], isLoading: slotsLoading } = useQuery({
     queryKey: ["timeSlots"],
     queryFn: () => api.slots.list(),
   });
 
-  // Récupérer les financements
   const { data: fundings = [], isLoading: fundingsLoading } = useQuery({
     queryKey: ["fundings"],
     queryFn: () => api.fundings.list(),
   });
 
-  // Mutations pour les créneaux
   const createMutation = useMutation({
     mutationFn: (data) => api.slots.create(data),
     onSuccess: () => {
@@ -299,7 +289,6 @@ export default function ManageSlots() {
     onError: () => toast.error("Impossible de supprimer ce créneau."),
   });
 
-  // Mutations pour les financements
   const createFundingMutation = useMutation({
     mutationFn: (data) => api.fundings.create(data),
     onSuccess: () => {
@@ -404,7 +393,6 @@ export default function ManageSlots() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Total créneaux", value: stats.total, color: "text-foreground" },
@@ -418,10 +406,8 @@ export default function ManageSlots() {
           ))}
         </div>
 
-        {/* Share link */}
         <ShareLinkCard />
 
-        {/* Add Slot Form */}
         <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
           <h2 className="font-bold text-foreground flex items-center gap-2">
             <Plus className="w-4 h-4 text-primary" /> Ajouter un créneau
@@ -498,7 +484,6 @@ export default function ManageSlots() {
           </form>
         </div>
 
-        {/* Activity Funding Section */}
         <ActivityFundingCard
           fundings={fundings}
           isLoading={fundingsLoading}
@@ -506,7 +491,6 @@ export default function ManageSlots() {
           onDeleteFunding={deleteFundingMutation.mutate}
         />
 
-        {/* Filter */}
         <div className="flex items-center gap-3">
           <Label className="text-xs font-semibold whitespace-nowrap">Filtrer par date :</Label>
           <Input
@@ -522,7 +506,6 @@ export default function ManageSlots() {
           )}
         </div>
 
-        {/* Slots List */}
         {slotsLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />

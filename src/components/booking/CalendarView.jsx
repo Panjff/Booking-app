@@ -12,9 +12,9 @@ export default function CalendarView({
   onSelectDate,
   currentMonth,
   onMonthChange,
-  availableDates = new Set(), // Dates avec créneaux disponibles (bleu)
-  fundingDates = new Set(),   // Dates avec financements disponibles (rose)
-  bookingType = "slot",      // "slot" ou "funding"
+  availableDates = new Set(),
+  fundingDates = new Set(),
+  bookingType = "slot",
 }) {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -35,7 +35,6 @@ export default function CalendarView({
   const hasAvailability = (d) => availableDates.has(format(d, "yyyy-MM-dd"));
   const hasFunding = (d) => fundingDates.has(format(d, "yyyy-MM-dd"));
 
-  // Déterminer la couleur de la date
   const getDateColor = (d) => {
     const dateStr = format(d, "yyyy-MM-dd");
     const isAvail = availableDates.has(dateStr);
@@ -44,13 +43,11 @@ export default function CalendarView({
     if (bookingType === "funding") {
       return isFund ? "pink" : "none";
     }
-    // Par défaut, on montre les créneaux
     if (isAvail) return "blue";
     if (isFund) return "pink";
     return "none";
   };
 
-  // Obtenir les classes CSS pour une date
   const getDateClasses = (d, isCurrentMonth, past, isSelected, today) => {
     const color = getDateColor(d);
     const baseClasses = "relative aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all";
@@ -61,8 +58,6 @@ export default function CalendarView({
     if (past) {
       return `${baseClasses} text-muted-foreground/40 cursor-not-allowed`;
     }
-    
-    // Couleurs selon le type
     if (color === "blue") {
       if (isSelected) {
         return `${baseClasses} bg-blue-500 text-white shadow-lg shadow-blue-500/25 cursor-pointer`;
@@ -82,15 +77,12 @@ export default function CalendarView({
       }
       return `${baseClasses} text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-950/30 font-bold cursor-pointer`;
     }
-    
-    // Aucune disponibilité
     if (today) {
       return `${baseClasses} ring-2 ring-primary/30 text-foreground cursor-default`;
     }
     return `${baseClasses} text-muted-foreground/50 cursor-default`;
   };
 
-  // Déterminer si une date est cliquable
   const isDateClickable = (d, isCurrentMonth, past) => {
     if (!isCurrentMonth || past) return false;
     const color = getDateColor(d);
@@ -141,8 +133,6 @@ export default function CalendarView({
               className={getDateClasses(d, isCurrentMonth, past, isSelected, today)}
             >
               {d.getDate()}
-              
-              {/* Indicateurs de disponibilité */}
               {isCurrentMonth && !past && (hasBlue || hasPink) && (
                 <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
                   {hasBlue && (
@@ -166,7 +156,6 @@ export default function CalendarView({
         })}
       </div>
 
-      {/* Légende des couleurs */}
       <div className="mt-4 pt-4 border-t border-border flex items-center justify-center gap-6">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500" />

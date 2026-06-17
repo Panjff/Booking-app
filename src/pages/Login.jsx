@@ -7,9 +7,6 @@ import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2, Shield } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
-// Récupérer l'email admin depuis les variables d'environnement
-// Note: Les variables d'environnement côté client doivent commencer par VITE_
-// Pour utiliser la variable du backend, on la définit aussi côté frontend
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "emilie.tall@gmail.com";
 
 export default function Login() {
@@ -27,18 +24,14 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      // Vérifier d'abord que l'email correspond à l'admin
       if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
         throw new Error("Cet email n'est pas autorisé. Seul l'administrateur peut se connecter.");
       }
 
       const user = await login(email, password);
-      
-      // Vérifier si l'utilisateur est admin
       if (!user.isAdmin) {
         throw new Error("Accès non autorisé. Seul l'administrateur peut se connecter.");
       }
-      
       navigate(redirect);
     } catch (err) {
       setError(err.message || "Email ou mot de passe incorrect");

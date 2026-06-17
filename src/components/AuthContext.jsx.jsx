@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { api } from "@/api/client";
 
-// Récupérer l'email admin depuis les variables d'environnement
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "emilie.tall@gmail.com";
 
 const AuthContext = createContext();
@@ -11,17 +10,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est déjà connecté
     const token = localStorage.getItem("auth_token");
     if (token) {
       api.auth
         .me()
         .then((user) => {
-          // Vérifier que c'est bien un admin
           if (user.isAdmin && user.email === ADMIN_EMAIL) {
             setUser(user);
           } else {
-            // Si ce n'est pas l'admin, déconnecter
             localStorage.removeItem("auth_token");
             setUser(null);
           }
@@ -37,7 +33,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    // Vérifier que l'email correspond à l'admin
     if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
       throw new Error("Cet email n'est pas autorisé. Seul l'administrateur peut se connecter.");
     }
@@ -45,12 +40,9 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.auth.login({ email, password });
       const { token, user } = response;
-      
-      // Vérifier que l'utilisateur est admin
       if (!user.isAdmin || user.email !== ADMIN_EMAIL) {
         throw new Error("Accès non autorisé. Seul l'administrateur peut se connecter.");
       }
-      
       localStorage.setItem("auth_token", token);
       setUser(user);
       return user;

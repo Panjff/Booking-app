@@ -18,7 +18,6 @@ import { sendConfirmationEmail, sendAdminNotificationEmail } from "./email.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3001);
 
-// --- Config PayPal ---
 function getPayPalClient() {
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -46,8 +45,6 @@ app.get("/", (_req, res) => {
 function publicUser(user) {
   return { id: user.id, email: user.email, role: user.role, name: user.name };
 }
-
-// --- Auth ---
 
 app.post("/api/auth/register", authMiddleware, (req, res) => {
   if (req.user.role !== "admin") {
@@ -152,8 +149,6 @@ app.post("/api/auth/reset-password", (req, res) => {
   res.json({ ok: true });
 });
 
-// --- Time Slots ---
-
 app.get("/api/slots", (_req, res) => {
   const data = db.read();
   const slots = [...data.timeSlots].sort((a, b) => {
@@ -227,9 +222,6 @@ app.delete("/api/slots/:id", authMiddleware, (req, res) => {
   res.json({ ok: true });
 });
 
-// --- PayPal Payments ---
-
-// Étape 1 : créer la commande PayPal
 app.post("/api/payments/create-order", async (req, res) => {
   const client = getPayPalClient();
   if (!client) {
@@ -287,7 +279,6 @@ app.post("/api/payments/create-order", async (req, res) => {
   }
 });
 
-// Étape 2 : capturer le paiement et confirmer le RDV
 app.post("/api/payments/capture-order", async (req, res) => {
   const client = getPayPalClient();
   if (!client) {
@@ -311,7 +302,6 @@ app.post("/api/payments/capture-order", async (req, res) => {
       return res.status(500).json({ error: "Réponse PayPal invalide (purchase_units manquant)" });
     }
 
-    // 🔧 CORRECTION : custom_id est dans payments.captures[0]
     const captureData = unit?.payments?.captures?.[0];
     if (!captureData) {
       console.error("[paypal] captureData manquant:", JSON.stringify(capture.result, null, 2));
@@ -323,7 +313,6 @@ app.post("/api/payments/capture-order", async (req, res) => {
       return res.status(500).json({ error: "Réponse PayPal invalide (custom_id manquant)" });
     }
 
-    // Parse custom_id
     const { slotId, fundingId, clientEmail, clientName } = JSON.parse(captureData.custom_id);
     const amountPaid = parseFloat(captureData?.amount?.value);
 
@@ -383,7 +372,6 @@ app.post("/api/payments/capture-order", async (req, res) => {
     data.appointments.push(appointment);
     db.write(data);
 
-    // Email au client
     try {
       await sendConfirmationEmail({
         to: clientEmail,
@@ -397,7 +385,6 @@ app.post("/api/payments/capture-order", async (req, res) => {
       console.error("[email] Erreur envoi client:", emailErr.message);
     }
 
-    // Email à l'admin
     try {
       await sendAdminNotificationEmail({
         clientName,
@@ -417,8 +404,6 @@ app.post("/api/payments/capture-order", async (req, res) => {
     res.status(500).json({ error: err.message || "Erreur serveur" });
   }
 });
-
-// --- Demo booking (sans PayPal) ---
 
 app.post("/api/bookings/demo", async (req, res) => {
   const { slotId, clientName, clientEmail, notes } = req.body;
@@ -477,8 +462,6 @@ app.post("/api/bookings/demo", async (req, res) => {
 
   res.json({ appointment });
 });
-
-// --- Static files in production ---
 
 const distPath = path.join(__dirname, "..", "dist");
 if (fs.existsSync(distPath)) {
