@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Sparkles, Plus, Trash2, Calendar, Clock, DollarSign, Loader2, Zap, LogOut, Link2, Copy, Check, Target, CreditCard } from "lucide-react";
+import { Sparkles, Plus, Trash2, Calendar, Clock, DollarSign, Loader2, Zap, LogOut, Link2, Copy, Check, Target, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,7 +76,7 @@ function ShareLinkCard() {
 // Composant pour le financement d'activité
 function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isLoading }) {
   const [activityName, setActivityName] = useState("");
-  const [fundingAmount, setFundingAmount] = useState("100");
+  const [fundingAmount, setFundingAmount] = useState("0");
   const [fundingGoal, setFundingGoal] = useState("500");
 
   const handleAddFunding = (e) => {
@@ -85,14 +85,27 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
       toast.error("Veuillez entrer un nom d'activité.");
       return;
     }
+    const amount = parseFloat(fundingAmount) || 0;
+    const goal = parseFloat(fundingGoal) || 0;
+    
+    if (goal <= 0) {
+      toast.error("L'objectif doit être supérieur à 0.");
+      return;
+    }
+    
+    if (amount < 0) {
+      toast.error("Le montant ne peut pas être négatif.");
+      return;
+    }
+    
     onAddFunding({
       activity_name: activityName,
-      amount: parseFloat(fundingAmount) || 100,
-      goal: parseFloat(fundingGoal) || 500,
-      is_funded: false,
+      amount: amount,
+      goal: goal,
+      is_funded: amount >= goal,
     });
     setActivityName("");
-    setFundingAmount("100");
+    setFundingAmount("0");
     setFundingGoal("500");
   };
 
@@ -155,7 +168,7 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
               type="number"
               value={fundingAmount}
               min="0"
-              step="10"
+              step="1"
               onChange={(e) => setFundingAmount(e.target.value)}
               className="rounded-xl"
               required
@@ -168,7 +181,7 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
             <Input
               type="number"
               value={fundingGoal}
-              min="0"
+              min="1"
               step="50"
               onChange={(e) => setFundingGoal(e.target.value)}
               className="rounded-xl"
@@ -190,37 +203,57 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
         <div className="space-y-2 mt-2">
           <h4 className="text-sm font-semibold text-muted-foreground">Financements en cours</h4>
           <div className="space-y-2">
-            {fundings.map((funding) => (
-              <div
-                key={funding.id}
-                className="flex items-center justify-between p-3 bg-accent/20 rounded-xl border border-border"
-              >
-                <div>
-                  <p className="font-semibold text-sm">{funding.activity_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    €{funding.amount} / €{funding.goal} 
-                    {funding.goal > 0 && ` (${((funding.amount / funding.goal) * 100).toFixed(1)}%)`}
-                  </p>
+            {fundings.map((funding) => {
+              const progress = funding.goal > 0 ? (funding.amount / funding.goal) * 100 : 0;
+              return (
+                <div
+                  key={funding.id}
+                  className="flex items-center justify-between p-3 bg-accent/20 rounded-xl border border-border"
+                >
+                  <div>
+                    <p className="font-semibold text-sm">{funding.activity_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      €{funding.amount} / €{funding.goal} 
+                      {funding.goal > 0 && ` (${Math.min(progress, 100).toFixed(1)}%)`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={`text-[10px] ${funding.amount >= funding.goal ? 'bg-green-500/20 text-green-700' : 'bg-primary/10 text-primary'}`}>
+                      {funding.amount >= funding.goal ? '✅ Financé' : 'En cours'}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => onDeleteFunding(funding.id)}
+                      disabled={isLoading}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={`text-[10px] ${funding.is_funded ? 'bg-green-500/20 text-green-700' : 'bg-primary/10 text-primary'}`}>
-                    {funding.is_funded ? '✅ Financé' : 'En cours'}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => onDeleteFunding(funding.id)}
-                    disabled={isLoading}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
+
+      {/* Clause de non-garantie */}
+      <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Avertissement important
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+              Le paiement effectué dans le cadre du financement d'une activité ne garantit aucunement 
+              une quelconque prestation, service ou résultat de la part d'Émilie. Ce financement est 
+              un soutien volontaire au projet, sans contrepartie obligatoire.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
