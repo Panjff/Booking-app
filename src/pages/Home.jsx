@@ -148,13 +148,13 @@ export default function Home() {
                       onClick={() => setBookingType(BOOKING_TYPES.SLOT)}
                       className={`p-3 rounded-xl border-2 transition-all ${
                         bookingType === BOOKING_TYPES.SLOT
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                          : "border-border hover:border-blue-300"
+                          ? "border-pink-500 bg-pink-50 dark:bg-pink-950/20"
+                          : "border-border hover:border-pink-300"
                       }`}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <Calendar className="w-4 h-4 text-blue-500" />
-                        <span className="font-semibold text-sm">Créneau horaire</span>
+                        <Calendar className="w-4 h-4 text-pink-500" />
+                        <span className="font-semibold text-sm">Jour pour un date</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Réserver un créneau</p>
                     </button>
@@ -162,13 +162,13 @@ export default function Home() {
                       onClick={() => setBookingType(BOOKING_TYPES.FUNDING)}
                       className={`p-3 rounded-xl border-2 transition-all ${
                         bookingType === BOOKING_TYPES.FUNDING
-                          ? "border-pink-500 bg-pink-50 dark:bg-pink-950/20"
-                          : "border-border hover:border-pink-300"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                          : "border-border hover:border-blue-300"
                       }`}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <Target className="w-4 h-4 text-pink-500" />
-                        <span className="font-semibold text-sm">Financer une activité</span>
+                        <Target className="w-4 h-4 text-blue-500" />
+                        <span className="font-semibold text-sm">Financer mon train de vie</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Soutenir un projet</p>
                     </button>
@@ -293,7 +293,7 @@ function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFundin
   if (!selectedDate) {
     return (
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6 text-center">
-        <Target className="w-8 h-8 text-pink-400 mx-auto mb-2" />
+        <Target className="w-8 h-8 text-blue-400 mx-auto mb-2" />
         <p className="text-muted-foreground text-sm">Sélectionnez une date pour voir les activités à financer</p>
       </div>
     );
@@ -302,7 +302,7 @@ function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFundin
   if (fundings.length === 0) {
     return (
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6 text-center">
-        <Target className="w-8 h-8 text-pink-400 mx-auto mb-2" />
+        <Target className="w-8 h-8 text-blue-400 mx-auto mb-2" />
         <p className="text-muted-foreground text-sm">Aucune activité à financer pour cette date</p>
       </div>
     );
@@ -311,7 +311,7 @@ function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFundin
   return (
     <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
       <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-        <Target className="w-4 h-4 text-pink-500" />
+        <Target className="w-4 h-4 text-blue-500" />
         Activités à financer
       </h3>
       <div className="space-y-2">
@@ -325,8 +325,8 @@ function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFundin
               onClick={() => onSelectFunding(funding)}
               className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
                 isSelected
-                  ? "border-pink-500 bg-pink-50 dark:bg-pink-950/20"
-                  : "border-border hover:border-pink-300"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                  : "border-border hover:border-blue-300"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -338,17 +338,17 @@ function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFundin
                     </span>
                     <div className="w-20 h-1.5 bg-muted rounded-full">
                       <div 
-                        className="h-1.5 bg-pink-500 rounded-full transition-all"
+                        className="h-1.5 bg-blue-500 rounded-full transition-all"
                         style={{ width: `${Math.min(progress, 100)}%` }}
                       />
                     </div>
-                    <span className="text-xs font-semibold text-pink-600">
+                    <span className="text-xs font-semibold text-blue-600">
                       {Math.min(progress, 100).toFixed(0)}%
                     </span>
                   </div>
                 </div>
                 {isSelected && (
-                  <Badge className="bg-pink-500 text-white">Sélectionné</Badge>
+                  <Badge className="bg-blue-500 text-white">Sélectionné</Badge>
                 )}
               </div>
             </button>

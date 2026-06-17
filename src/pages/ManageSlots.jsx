@@ -87,8 +87,8 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
     const amount = parseFloat(fundingAmount) || 0;
     const goal = parseFloat(fundingGoal) || 0;
     
-    if (goal <= 0) {
-      toast.error("L'objectif doit être supérieur à 0.");
+    if (goal < 10 || goal > 1000000) {
+      toast.error("L'objectif doit être entre 10 et 1 000 000 €.");
       return;
     }
     
@@ -176,8 +176,9 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
             <Input
               type="number"
               value={fundingGoal}
-              min="1"
-              step="50"
+              min="10"
+              max="1000000"
+              step="10"
               onChange={(e) => setFundingGoal(e.target.value)}
               className="rounded-xl"
               required
@@ -231,22 +232,6 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
           </div>
         </div>
       )}
-
-      <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-              Avertissement important
-            </p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-              Le paiement effectué dans le cadre du financement d'une activité ne garantit aucunement 
-              une quelconque prestation, service ou résultat de la part d'Émilie. Ce financement est 
-              un soutien volontaire au projet, sans contrepartie obligatoire.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
