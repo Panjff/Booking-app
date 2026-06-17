@@ -29,7 +29,8 @@ export default function Login() {
       }
 
       const user = await login(email, password);
-      if (!user.isAdmin) {
+      // Correction : vérifier la propriété 'role' au lieu de 'isAdmin'
+      if (user.role !== "admin") {
         throw new Error("Accès non autorisé. Seul l'administrateur peut se connecter.");
       }
       navigate(redirect);
