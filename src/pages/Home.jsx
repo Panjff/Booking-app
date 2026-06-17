@@ -3,12 +3,8 @@ import { Link } from "react-router-dom";
 import { api } from "@/api/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { Sparkles, Target, Calendar, Clock, DollarSign, User, CreditCard, ArrowRight } from "lucide-react";
+import { Sparkles, Target, Calendar, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 import CalendarView from "@/components/booking/CalendarView";
@@ -53,7 +49,7 @@ export default function Home() {
     return dates;
   }, [allSlots]);
 
-  // Dates disponibles pour les financements (toutes les dates avec des financements actifs)
+  // Dates disponibles pour les financements
   const fundingDates = useMemo(() => {
     const dates = new Set();
     allFundings.forEach((f) => {
@@ -132,105 +128,129 @@ export default function Home() {
             <SuccessView appointment={createdAppointment} onReset={handleReset} />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              {/* Sélecteur de type de réservation */}
-              <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setBookingType(BOOKING_TYPES.SLOT)}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      bookingType === BOOKING_TYPES.SLOT
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                        : "border-border hover:border-blue-300"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Calendar className="w-4 h-4 text-blue-500" />
-                      <span className="font-semibold text-sm">Créneau horaire</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Réserver un créneau</p>
-                  </button>
-                  <button
-                    onClick={() => setBookingType(BOOKING_TYPES.FUNDING)}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      bookingType === BOOKING_TYPES.FUNDING
-                        ? "border-pink-500 bg-pink-50 dark:bg-pink-950/20"
-                        : "border-border hover:border-pink-300"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Target className="w-4 h-4 text-pink-500" />
-                      <span className="font-semibold text-sm">Financer une activité</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Soutenir un projet</p>
-                  </button>
+          <>
+            {/* Avertissement pour les financements */}
+            {bookingType === BOOKING_TYPES.FUNDING && (
+              <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                      Avertissement important
+                    </p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                      Le paiement effectué dans le cadre du financement d'une activité ne garantit aucunement 
+                      une quelconque prestation, service ou résultat de la part d'Émilie. Ce financement est 
+                      un soutien volontaire au projet, sans contrepartie obligatoire.
+                    </p>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <CalendarView
-                selectedDate={selectedDate}
-                onSelectDate={handleDateSelect}
-                currentMonth={currentMonth}
-                onMonthChange={setCurrentMonth}
-                availableDates={availableDates}
-                fundingDates={fundingDates}
-                bookingType={bookingType}
-              />
-
-              {bookingType === BOOKING_TYPES.SLOT ? (
-                <TimeSlotPicker
-                  selectedDate={selectedDate}
-                  slots={daySlots}
-                  selectedSlot={selectedSlot}
-                  onSelectSlot={(slot) => {
-                    setSelectedSlot(slot);
-                    if (step === STEPS.SELECT) setStep(STEPS.FORM);
-                  }}
-                  isLoading={slotsLoading}
-                />
-              ) : (
-                <FundingPicker
-                  selectedDate={selectedDate}
-                  fundings={dayFundings}
-                  selectedFunding={selectedFunding}
-                  onSelectFunding={(funding) => {
-                    setSelectedFunding(funding);
-                    if (step === STEPS.SELECT) setStep(STEPS.FORM);
-                  }}
-                  isLoading={fundingsLoading}
-                />
-              )}
-            </div>
-
-            <div>
-              {step === STEPS.FORM && (selectedSlot || selectedFunding) && (
-                <BookingForm 
-                  onSubmit={handleFormSubmit} 
-                  bookingType={bookingType}
-                  selectedItem={selectedSlot || selectedFunding}
-                />
-              )}
-              {step === STEPS.PAY && clientInfo && (
-                <PaymentStep
-                  slot={selectedSlot}
-                  funding={selectedFunding}
-                  clientInfo={clientInfo}
-                  bookingType={bookingType}
-                  onSuccess={handlePaymentSuccess}
-                  onBack={() => setStep(STEPS.FORM)}
-                />
-              )}
-              {step === STEPS.SELECT && (
-                <div className="bg-card rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center justify-center min-h-[280px]">
-                  <div className="text-4xl mb-3">💖</div>
-                  <p className="text-muted-foreground text-center font-medium text-sm">
-                    Sélectionnez une date et un créneau pour commencer !
-                  </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                {/* Sélecteur de type de réservation */}
+                <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setBookingType(BOOKING_TYPES.SLOT)}
+                      className={`p-3 rounded-xl border-2 transition-all ${
+                        bookingType === BOOKING_TYPES.SLOT
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                          : "border-border hover:border-blue-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Calendar className="w-4 h-4 text-blue-500" />
+                        <span className="font-semibold text-sm">Créneau horaire</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Réserver un créneau</p>
+                    </button>
+                    <button
+                      onClick={() => setBookingType(BOOKING_TYPES.FUNDING)}
+                      className={`p-3 rounded-xl border-2 transition-all ${
+                        bookingType === BOOKING_TYPES.FUNDING
+                          ? "border-pink-500 bg-pink-50 dark:bg-pink-950/20"
+                          : "border-border hover:border-pink-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Target className="w-4 h-4 text-pink-500" />
+                        <span className="font-semibold text-sm">Financer une activité</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Soutenir un projet</p>
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                <CalendarView
+                  selectedDate={selectedDate}
+                  onSelectDate={handleDateSelect}
+                  currentMonth={currentMonth}
+                  onMonthChange={setCurrentMonth}
+                  availableDates={availableDates}
+                  fundingDates={fundingDates}
+                  bookingType={bookingType}
+                />
+
+                {bookingType === BOOKING_TYPES.SLOT ? (
+                  <TimeSlotPicker
+                    selectedDate={selectedDate}
+                    slots={daySlots}
+                    selectedSlot={selectedSlot}
+                    onSelectSlot={(slot) => {
+                      setSelectedSlot(slot);
+                      if (step === STEPS.SELECT) setStep(STEPS.FORM);
+                    }}
+                    isLoading={slotsLoading}
+                  />
+                ) : (
+                  <FundingPicker
+                    selectedDate={selectedDate}
+                    fundings={dayFundings}
+                    selectedFunding={selectedFunding}
+                    onSelectFunding={(funding) => {
+                      setSelectedFunding(funding);
+                      if (step === STEPS.SELECT) setStep(STEPS.FORM);
+                    }}
+                    isLoading={fundingsLoading}
+                  />
+                )}
+              </div>
+
+              <div>
+                {step === STEPS.FORM && (selectedSlot || selectedFunding) && (
+                  <BookingForm 
+                    onSubmit={handleFormSubmit} 
+                    bookingType={bookingType}
+                    selectedItem={selectedSlot || selectedFunding}
+                  />
+                )}
+                {step === STEPS.PAY && clientInfo && (
+                  <PaymentStep
+                    slot={selectedSlot}
+                    funding={selectedFunding}
+                    clientInfo={clientInfo}
+                    bookingType={bookingType}
+                    onSuccess={handlePaymentSuccess}
+                    onBack={() => setStep(STEPS.FORM)}
+                  />
+                )}
+                {step === STEPS.SELECT && (
+                  <div className="bg-card rounded-2xl shadow-sm border border-border p-6 flex flex-col items-center justify-center min-h-[280px]">
+                    <div className="text-4xl mb-3">💖</div>
+                    <p className="text-muted-foreground text-center font-medium text-sm">
+                      {bookingType === BOOKING_TYPES.SLOT 
+                        ? "Sélectionnez une date et un créneau pour commencer !"
+                        : "Sélectionnez une date et une activité à financer !"
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </main>
     </div>

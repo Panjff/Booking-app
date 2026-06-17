@@ -24,12 +24,14 @@ export async function apiFetch(path, options = {}) {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`/api${path}`, { ...options, headers });
+  const baseUrl = import.meta.env.VITE_API_URL || "/api";
+  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const res = await fetch(`${normalizedBaseUrl}${path}`, { ...options, headers });
   
-  // ✅ CORRECTION : Lire le texte d'abord
+  // Lire le texte d'abord
   const text = await res.text();
   
-  // ✅ Vérifier si la réponse est vide
+  // Vérifier si la réponse est vide
   if (!text || text.trim() === '') {
     if (!res.ok) {
       throw new ApiError(res.statusText || 'Erreur serveur', res.status);
@@ -37,7 +39,7 @@ export async function apiFetch(path, options = {}) {
     return {}; // Réponse vide mais OK (204 No Content)
   }
 
-  // ✅ Essayer de parser le JSON
+  // Essayer de parser le JSON
   let data;
   try {
     data = JSON.parse(text);
@@ -55,19 +57,21 @@ export async function apiFetch(path, options = {}) {
 
 export const api = {
   auth: {
-    register: (body) => apiFetch("/auth/register", { method: "POST", body: JSON.stringify(body) }),
     login: (body) => apiFetch("/auth/login", { method: "POST", body: JSON.stringify(body) }),
     me: () => apiFetch("/auth/me"),
-    forgotPassword: (email) =>
-      apiFetch("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
-    resetPassword: (body) =>
-      apiFetch("/auth/reset-password", { method: "POST", body: JSON.stringify(body) }),
   },
   slots: {
     list: () => apiFetch("/slots"),
     create: (data) => apiFetch("/slots", { method: "POST", body: JSON.stringify(data) }),
     bulkCreate: (data) => apiFetch("/slots/bulk", { method: "POST", body: JSON.stringify(data) }),
     delete: (id) => apiFetch(`/slots/${id}`, { method: "DELETE" }),
+  },
+  // ✅ Gestion des financements
+  fundings: {
+    list: () => apiFetch("/fundings"),
+    create: (data) => apiFetch("/fundings", { method: "POST", body: JSON.stringify(data) }),
+    delete: (id) => apiFetch(`/fundings/${id}`, { method: "DELETE" }),
+    update: (id, data) => apiFetch(`/fundings/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   },
   payments: {
     createOrder: (data) =>

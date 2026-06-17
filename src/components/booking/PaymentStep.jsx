@@ -12,7 +12,7 @@ import { api } from "@/api/client";
 const isPayPalConfigured = Boolean(import.meta.env.VITE_PAYPAL_CLIENT_ID);
 
 // ---------- Formulaire PayPal ----------
-function PayPalCheckoutForm({ slot, clientInfo, onSuccess }) {
+function PayPalCheckoutForm({ item, clientInfo, bookingType, onSuccess }) {
   const [error, setError] = useState(null);
 
   return (
@@ -30,7 +30,8 @@ function PayPalCheckoutForm({ slot, clientInfo, onSuccess }) {
           setError(null);
           try {
             const res = await api.payments.createOrder({
-              slotId: slot.id,
+              slotId: bookingType === "slot" ? item.id : undefined,
+              fundingId: bookingType === "funding" ? item.id : undefined,
               clientEmail: clientInfo.email,
               clientName: clientInfo.name,
             });
@@ -61,14 +62,14 @@ function PayPalCheckoutForm({ slot, clientInfo, onSuccess }) {
       />
 
       <p className="text-xs text-center text-muted-foreground">
-        Paiement sécurisé par PayPal
+        {bookingType === "funding" ? "Soutien sécurisé par PayPal" : "Paiement sécurisé par PayPal"}
       </p>
     </div>
   );
 }
 
 // ---------- Mode démo ----------
-function DemoPaymentForm({ slot, clientInfo, onSuccess, onBack }) {
+function DemoPaymentForm({ item, clientInfo, bookingType, onSuccess, onBack }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
 
@@ -77,7 +78,7 @@ function DemoPaymentForm({ slot, clientInfo, onSuccess, onBack }) {
     setError(null);
     try {
       const result = await api.bookings.demo({
-        slotId: slot.id,
+        slotId: item.id,
         clientName: clientInfo.name,
         clientEmail: clientInfo.email,
         notes: clientInfo.notes || "",
@@ -93,7 +94,9 @@ function DemoPaymentForm({ slot, clientInfo, onSuccess, onBack }) {
   return (
     <div className="space-y-4">
       <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
-        Mode démo — PayPal non configuré. La réservation sera confirmée sans paiement réel.
+        {bookingType === "funding"
+          ? "Mode démo — PayPal non configuré. Le soutien sera enregistré sans paiement réel."
+          : "Mode démo — PayPal non configuré. La réservation sera confirmée sans paiement réel."}
       </div>
       {error && (
         <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-sm">
@@ -112,7 +115,7 @@ function DemoPaymentForm({ slot, clientInfo, onSuccess, onBack }) {
             Confirmation...
           </>
         ) : (
-          "Confirmer la réservation (démo)"
+          bookingType === "funding" ? "Confirmer le soutien (démo)" : "Confirmer la réservation (démo)"
         )}
       </Button>
       <Button variant="ghost" onClick={onBack} className="w-full rounded-xl">
@@ -123,7 +126,10 @@ function DemoPaymentForm({ slot, clientInfo, onSuccess, onBack }) {
 }
 
 // ---------- Composant principal ----------
-export default function PaymentStep({ slot, clientInfo, onSuccess, onBack }) {
+export default function PaymentStep({ slot, funding, clientInfo, bookingType = "slot", onSuccess, onBack }) {
+  const item = bookingType === "funding" ? funding : slot;
+  const amount = item?.price || item?.goal || 50;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 30 }}
@@ -136,23 +142,40 @@ export default function PaymentStep({ slot, clientInfo, onSuccess, onBack }) {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <h3 className="text-base font-bold font-heading text-foreground">
-          Paiement 💳
+          {bookingType === "funding" ? "Soutien 💳" : "Paiement 💳"}
         </h3>
       </div>
 
       {/* Récapitulatif */}
       <div className="bg-accent/60 rounded-xl p-4 mb-5">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-muted-foreground">Rendez-vous</span>
+          <span className="text-sm text-muted-foreground">
+            {bookingType === "funding" ? "Activité soutenue" : "Rendez-vous"}
+          </span>
           <Sparkles className="w-4 h-4 text-primary" />
         </div>
-        <p className="font-bold text-foreground">
-          {format(new Date(slot.date + "T12:00:00"), "d MMMM yyyy", { locale: fr })}
-        </p>
-        <p className="text-sm text-muted-foreground">{slot.time}</p>
+        {bookingType === "funding" ? (
+          <>
+            <p className="font-bold text-foreground">{item?.activity_name}</p>
+            <p className="text-sm text-muted-foreground">
+              {item?.date
+                ? format(new Date(item.date + "T12:00:00"), "d MMMM yyyy", { locale: fr })
+                : "Disponible immédiatement"}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-bold text-foreground">
+              {format(new Date(item.date + "T12:00:00"), "d MMMM yyyy", { locale: fr })}
+            </p>
+            <p className="text-sm text-muted-foreground">{item.time}</p>
+          </>
+        )}
         <div className="border-t border-border mt-3 pt-3 flex justify-between items-center">
-          <span className="font-semibold text-foreground">Total</span>
-          <span className="text-xl font-extrabold text-primary">€{slot.price || 50}</span>
+          <span className="font-semibold text-foreground">
+            {bookingType === "funding" ? "Montant actuel" : "Total"}
+          </span>
+          <span className="text-xl font-extrabold text-primary">€{amount}</span>
         </div>
       </div>
 
@@ -165,15 +188,17 @@ export default function PaymentStep({ slot, clientInfo, onSuccess, onBack }) {
           }}
         >
           <PayPalCheckoutForm
-            slot={slot}
+            item={item}
             clientInfo={clientInfo}
+            bookingType={bookingType}
             onSuccess={onSuccess}
           />
         </PayPalScriptProvider>
       ) : (
         <DemoPaymentForm
-          slot={slot}
+          item={item}
           clientInfo={clientInfo}
+          bookingType={bookingType}
           onSuccess={onSuccess}
           onBack={onBack}
         />

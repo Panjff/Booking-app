@@ -34,13 +34,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (_req, res) => {
+  res.json({
+    ok: true,
+    message: "API Booking-app disponible",
+    frontend:
+      "Client Vite attendu sur http://localhost:5173 en développement. Exécutez npm run build pour servir dist depuis le backend.",
+  });
+});
+
 function publicUser(user) {
   return { id: user.id, email: user.email, role: user.role, name: user.name };
 }
 
 // --- Auth ---
 
-app.post("/api/auth/register", (req, res) => {
+app.post("/api/auth/register", authMiddleware, (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Accès interdit" });
+  }
+
   const { email, password, name } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "Email et mot de passe requis" });
@@ -54,13 +67,12 @@ app.post("/api/auth/register", (req, res) => {
     return res.status(409).json({ error: "Un compte existe déjà avec cet email" });
   }
 
-  const isFirstUser = data.users.length === 0;
   const user = {
     id: newId(),
     email: email.toLowerCase(),
     name: name || email.split("@")[0],
     passwordHash: hashPassword(password),
-    role: isFirstUser ? "admin" : "user",
+    role: "user",
     createdAt: new Date().toISOString(),
   };
 
@@ -81,6 +93,9 @@ app.post("/api/auth/login", (req, res) => {
   const user = data.users.find((u) => u.email === email.toLowerCase());
   if (!user || !verifyPassword(password, user.passwordHash)) {
     return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+  }
+  if (user.role !== "admin") {
+    return res.status(403).json({ error: "Accès interdit" });
   }
 
   const token = signToken(user);
@@ -221,17 +236,33 @@ app.post("/api/payments/create-order", async (req, res) => {
     return res.status(500).json({ error: "PayPal non configuré (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET manquants)" });
   }
 
-  const { slotId, clientEmail, clientName } = req.body;
-  if (!slotId || !clientEmail || !clientName) {
+  const { slotId, fundingId, clientEmail, clientName } = req.body;
+  if ((!slotId && !fundingId) || !clientEmail || !clientName) {
     return res.status(400).json({ error: "Paramètres manquants" });
   }
 
   const data = db.read();
-  const slot = data.timeSlots.find((s) => s.id === slotId);
-  if (!slot) return res.status(404).json({ error: "Créneau introuvable" });
-  if (slot.is_booked) return res.status(409).json({ error: "Ce créneau n'est plus disponible" });
+  const slot = slotId ? data.timeSlots.find((s) => s.id === slotId) : null;
+  const funding = fundingId ? data.fundings?.find((f) => f.id === fundingId) : null;
+
+  if (slotId) {
+    if (!slot) return res.status(404).json({ error: "Créneau introuvable" });
+    if (slot.is_booked) return res.status(409).json({ error: "Ce créneau n'est plus disponible" });
+  }
+
+  if (fundingId && !funding) {
+    return res.status(404).json({ error: "Activité à financer introuvable" });
+  }
 
   try {
+    const amount = slot ? slot.price || 50 : funding.goal || 50;
+    const description = slot
+      ? `Rendez-vous le ${slot.date} à ${slot.time}`
+      : `Soutien pour ${funding.activity_name}`;
+    const customId = JSON.stringify(slot
+      ? { slotId, clientEmail, clientName }
+      : { fundingId, clientEmail, clientName });
+
     const request = new paypal.orders.OrdersCreateRequest();
     request.prefer("return=representation");
     request.requestBody({
@@ -240,10 +271,10 @@ app.post("/api/payments/create-order", async (req, res) => {
         {
           amount: {
             currency_code: "EUR",
-            value: String((slot.price || 50).toFixed(2)),
+            value: String(amount.toFixed(2)),
           },
-          description: `Rendez-vous le ${slot.date} à ${slot.time}`,
-          custom_id: JSON.stringify({ slotId, clientEmail, clientName }),
+          description,
+          custom_id: customId,
         },
       ],
     });
@@ -293,7 +324,7 @@ app.post("/api/payments/capture-order", async (req, res) => {
     }
 
     // Parse custom_id
-    const { slotId, clientEmail, clientName } = JSON.parse(captureData.custom_id);
+    const { slotId, fundingId, clientEmail, clientName } = JSON.parse(captureData.custom_id);
     const amountPaid = parseFloat(captureData?.amount?.value);
 
     if (!Number.isFinite(amountPaid)) {
@@ -302,6 +333,28 @@ app.post("/api/payments/capture-order", async (req, res) => {
     }
 
     const data = db.read();
+    if (fundingId) {
+      const funding = data.fundings?.find((f) => f.id === fundingId);
+      if (!funding) return res.status(404).json({ error: "Activité à financer introuvable" });
+
+      funding.amount = (parseFloat(funding.amount) || 0) + amountPaid;
+      funding.is_funded = funding.amount >= (parseFloat(funding.goal) || 0);
+      db.write(data);
+
+      return res.json({
+        appointment: {
+          id: newId(),
+          client_name: clientName,
+          client_email: clientEmail,
+          amount_paid: amountPaid,
+          payment_status: "paid",
+          funding_id: fundingId,
+          activity_name: funding.activity_name,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    }
+
     const slot = data.timeSlots.find((s) => s.id === slotId);
     if (!slot) return res.status(404).json({ error: "Créneau introuvable" });
 
