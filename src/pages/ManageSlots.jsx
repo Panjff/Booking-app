@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Sparkles, Plus, Trash2, Calendar, Clock, DollarSign, Loader2, Zap, LogOut, Link2, Copy, Check } from "lucide-react";
+import { Sparkles, Plus, Trash2, Calendar, Clock, DollarSign, Loader2, Zap, LogOut, Link2, Copy, Check, Target, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,13 +15,13 @@ import { toast } from "sonner";
 
 const TIME_SUGGESTIONS = [
   "00:00", "00:30", "01:00", "01:30", "02:00", "02:30",
-"03:00", "03:30", "04:00", "04:30", "05:00", "05:30",
-"06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
-"09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-"12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-"15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-"18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
-"21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
+  "03:00", "03:30", "04:00", "04:30", "05:00", "05:30",
+  "06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
+  "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+  "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+  "18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
+  "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
 ];
 
 function ShareLinkCard() {
@@ -45,7 +45,7 @@ function ShareLinkCard() {
         <Link2 className="w-4 h-4 text-primary" /> Lien de réservation à partager
       </h2>
       <p className="text-sm text-muted-foreground">
-        Envoyez ce lien à vos clients pour qu'ils puissent réserver un créneau directement.
+        Envoyez ce lien à vos clients pour qu'ils puissent réserver un créneau ou financer une activité directement.
       </p>
       <div className="flex items-center gap-2">
         <Input
@@ -73,6 +73,158 @@ function ShareLinkCard() {
   );
 }
 
+// Composant pour le financement d'activité
+function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isLoading }) {
+  const [activityName, setActivityName] = useState("");
+  const [fundingAmount, setFundingAmount] = useState("100");
+  const [fundingGoal, setFundingGoal] = useState("500");
+
+  const handleAddFunding = (e) => {
+    e.preventDefault();
+    if (!activityName.trim()) {
+      toast.error("Veuillez entrer un nom d'activité.");
+      return;
+    }
+    onAddFunding({
+      activity_name: activityName,
+      amount: parseFloat(fundingAmount) || 100,
+      goal: parseFloat(fundingGoal) || 500,
+      is_funded: false,
+    });
+    setActivityName("");
+    setFundingAmount("100");
+    setFundingGoal("500");
+  };
+
+  const totalFunded = fundings.reduce((sum, f) => sum + f.amount, 0);
+  const totalGoal = fundings.reduce((sum, f) => sum + f.goal, 0);
+  const progress = totalGoal > 0 ? (totalFunded / totalGoal) * 100 : 0;
+
+  return (
+    <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
+      <h2 className="font-bold text-foreground flex items-center gap-2">
+        <Target className="w-4 h-4 text-primary" /> Financement d'activités
+      </h2>
+      
+      {/* Stats de financement */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-accent/30 rounded-xl p-3 text-center">
+          <p className="text-xl font-extrabold text-primary">€{totalFunded}</p>
+          <p className="text-xs text-muted-foreground">Collecté</p>
+        </div>
+        <div className="bg-accent/30 rounded-xl p-3 text-center">
+          <p className="text-xl font-extrabold text-foreground">€{totalGoal}</p>
+          <p className="text-xs text-muted-foreground">Objectif total</p>
+        </div>
+      </div>
+
+      {/* Barre de progression */}
+      {totalGoal > 0 && (
+        <div className="space-y-1">
+          <div className="w-full bg-muted rounded-full h-2.5">
+            <div 
+              className="bg-primary h-2.5 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground text-right">
+            {Math.min(progress, 100).toFixed(1)}% atteint
+          </p>
+        </div>
+      )}
+
+      {/* Formulaire d'ajout */}
+      <form onSubmit={handleAddFunding} className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Nom de l'activité</Label>
+            <Input
+              type="text"
+              value={activityName}
+              onChange={(e) => setActivityName(e.target.value)}
+              placeholder="ex: Cours de musique"
+              className="rounded-xl"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold flex items-center gap-1">
+              <DollarSign className="w-3 h-3 text-primary" /> Montant collecté (€)
+            </Label>
+            <Input
+              type="number"
+              value={fundingAmount}
+              min="0"
+              step="10"
+              onChange={(e) => setFundingAmount(e.target.value)}
+              className="rounded-xl"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold flex items-center gap-1">
+              <Target className="w-3 h-3 text-primary" /> Objectif (€)
+            </Label>
+            <Input
+              type="number"
+              value={fundingGoal}
+              min="0"
+              step="50"
+              onChange={(e) => setFundingGoal(e.target.value)}
+              className="rounded-xl"
+              required
+            />
+          </div>
+        </div>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="rounded-xl font-semibold w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4 mr-2" /> Ajouter un financement
+        </Button>
+      </form>
+
+      {/* Liste des financements */}
+      {fundings.length > 0 && (
+        <div className="space-y-2 mt-2">
+          <h4 className="text-sm font-semibold text-muted-foreground">Financements en cours</h4>
+          <div className="space-y-2">
+            {fundings.map((funding) => (
+              <div
+                key={funding.id}
+                className="flex items-center justify-between p-3 bg-accent/20 rounded-xl border border-border"
+              >
+                <div>
+                  <p className="font-semibold text-sm">{funding.activity_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    €{funding.amount} / €{funding.goal} 
+                    {funding.goal > 0 && ` (${((funding.amount / funding.goal) * 100).toFixed(1)}%)`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className={`text-[10px] ${funding.is_funded ? 'bg-green-500/20 text-green-700' : 'bg-primary/10 text-primary'}`}>
+                    {funding.is_funded ? '✅ Financé' : 'En cours'}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => onDeleteFunding(funding.id)}
+                    disabled={isLoading}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ManageSlots() {
   const { user, logout } = useAuth();
   const [date, setDate] = useState("");
@@ -82,11 +234,19 @@ export default function ManageSlots() {
 
   const queryClient = useQueryClient();
 
-  const { data: slots = [], isLoading } = useQuery({
+  // Récupérer les créneaux
+  const { data: slots = [], isLoading: slotsLoading } = useQuery({
     queryKey: ["timeSlots"],
     queryFn: () => api.slots.list(),
   });
 
+  // Récupérer les financements
+  const { data: fundings = [], isLoading: fundingsLoading } = useQuery({
+    queryKey: ["fundings"],
+    queryFn: () => api.fundings.list(),
+  });
+
+  // Mutations pour les créneaux
   const createMutation = useMutation({
     mutationFn: (data) => api.slots.create(data),
     onSuccess: () => {
@@ -104,6 +264,25 @@ export default function ManageSlots() {
       toast.success("Créneau supprimé.");
     },
     onError: () => toast.error("Impossible de supprimer ce créneau."),
+  });
+
+  // Mutations pour les financements
+  const createFundingMutation = useMutation({
+    mutationFn: (data) => api.fundings.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fundings"] });
+      toast.success("Financement ajouté ! 🎯");
+    },
+    onError: () => toast.error("Impossible d'ajouter le financement."),
+  });
+
+  const deleteFundingMutation = useMutation({
+    mutationFn: (id) => api.fundings.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fundings"] });
+      toast.success("Financement supprimé.");
+    },
+    onError: () => toast.error("Impossible de supprimer ce financement."),
   });
 
   const isDuplicate = (d, t) => slots.some((s) => s.date === d && s.time === t);
@@ -159,6 +338,8 @@ export default function ManageSlots() {
     booked: upcomingSlots.filter((s) => s.is_booked).length,
   };
 
+  const isLoading = slotsLoading || fundingsLoading;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
@@ -193,7 +374,7 @@ export default function ManageSlots() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Total", value: stats.total, color: "text-foreground" },
+            { label: "Total créneaux", value: stats.total, color: "text-foreground" },
             { label: "Disponibles", value: stats.available, color: "text-green-600" },
             { label: "Réservés", value: stats.booked, color: "text-primary" },
           ].map((s) => (
@@ -284,6 +465,14 @@ export default function ManageSlots() {
           </form>
         </div>
 
+        {/* Activity Funding Section */}
+        <ActivityFundingCard
+          fundings={fundings}
+          isLoading={fundingsLoading}
+          onAddFunding={createFundingMutation.mutate}
+          onDeleteFunding={deleteFundingMutation.mutate}
+        />
+
         {/* Filter */}
         <div className="flex items-center gap-3">
           <Label className="text-xs font-semibold whitespace-nowrap">Filtrer par date :</Label>
@@ -301,7 +490,7 @@ export default function ManageSlots() {
         </div>
 
         {/* Slots List */}
-        {isLoading ? (
+        {slotsLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>

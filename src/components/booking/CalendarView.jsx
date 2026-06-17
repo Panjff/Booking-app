@@ -12,7 +12,9 @@ export default function CalendarView({
   onSelectDate,
   currentMonth,
   onMonthChange,
-  availableDates = new Set(),
+  availableDates = new Set(), // Dates avec créneaux disponibles (bleu)
+  fundingDates = new Set(),   // Dates avec financements disponibles (rose)
+  bookingType = "slot",      // "slot" ou "funding"
 }) {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -31,6 +33,69 @@ export default function CalendarView({
 
   const isPastDay = (d) => isBefore(d, startOfDay(new Date())) && !isToday(d);
   const hasAvailability = (d) => availableDates.has(format(d, "yyyy-MM-dd"));
+  const hasFunding = (d) => fundingDates.has(format(d, "yyyy-MM-dd"));
+
+  // Déterminer la couleur de la date
+  const getDateColor = (d) => {
+    const dateStr = format(d, "yyyy-MM-dd");
+    const isAvail = availableDates.has(dateStr);
+    const isFund = fundingDates.has(dateStr);
+    
+    if (bookingType === "funding") {
+      return isFund ? "pink" : "none";
+    }
+    // Par défaut, on montre les créneaux
+    if (isAvail) return "blue";
+    if (isFund) return "pink";
+    return "none";
+  };
+
+  // Obtenir les classes CSS pour une date
+  const getDateClasses = (d, isCurrentMonth, past, isSelected, today) => {
+    const color = getDateColor(d);
+    const baseClasses = "relative aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all";
+    
+    if (!isCurrentMonth) {
+      return `${baseClasses} text-muted-foreground/30 cursor-default`;
+    }
+    if (past) {
+      return `${baseClasses} text-muted-foreground/40 cursor-not-allowed`;
+    }
+    
+    // Couleurs selon le type
+    if (color === "blue") {
+      if (isSelected) {
+        return `${baseClasses} bg-blue-500 text-white shadow-lg shadow-blue-500/25 cursor-pointer`;
+      }
+      if (today) {
+        return `${baseClasses} ring-2 ring-blue-500/50 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer`;
+      }
+      return `${baseClasses} text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-bold cursor-pointer`;
+    }
+    
+    if (color === "pink") {
+      if (isSelected) {
+        return `${baseClasses} bg-pink-500 text-white shadow-lg shadow-pink-500/25 cursor-pointer`;
+      }
+      if (today) {
+        return `${baseClasses} ring-2 ring-pink-500/50 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-950/30 cursor-pointer`;
+      }
+      return `${baseClasses} text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-950/30 font-bold cursor-pointer`;
+    }
+    
+    // Aucune disponibilité
+    if (today) {
+      return `${baseClasses} ring-2 ring-primary/30 text-foreground cursor-default`;
+    }
+    return `${baseClasses} text-muted-foreground/50 cursor-default`;
+  };
+
+  // Déterminer si une date est cliquable
+  const isDateClickable = (d, isCurrentMonth, past) => {
+    if (!isCurrentMonth || past) return false;
+    const color = getDateColor(d);
+    return color !== "none";
+  };
 
   return (
     <div className="bg-card rounded-2xl shadow-sm border border-border p-5 md:p-6">
@@ -61,37 +126,56 @@ export default function CalendarView({
           const isSelected = selectedDate && isSameDay(d, selectedDate);
           const past = isPastDay(d);
           const today = isToday(d);
-          const available = hasAvailability(d);
+          const clickable = isDateClickable(d, isCurrentMonth, past);
+          const color = getDateColor(d);
+          const hasBlue = availableDates.has(format(d, "yyyy-MM-dd"));
+          const hasPink = fundingDates.has(format(d, "yyyy-MM-dd"));
 
           return (
             <motion.button
               key={i}
-              whileHover={!past && isCurrentMonth ? { scale: 1.1 } : {}}
-              whileTap={!past && isCurrentMonth ? { scale: 0.95 } : {}}
-              onClick={() => !past && isCurrentMonth && onSelectDate(d)}
-              disabled={past || !isCurrentMonth}
-              className={`
-                relative aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all
-                ${!isCurrentMonth ? "text-muted-foreground/30 cursor-default" : ""}
-                ${past ? "text-muted-foreground/40 cursor-not-allowed" : ""}
-                ${isCurrentMonth && !past && !isSelected ? "hover:bg-accent text-foreground cursor-pointer" : ""}
-                ${isSelected ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : ""}
-                ${today && !isSelected ? "ring-2 ring-primary/30" : ""}
-                ${available && !past && isCurrentMonth && !isSelected ? "font-bold" : ""}
-              `}
+              whileHover={clickable ? { scale: 1.1 } : {}}
+              whileTap={clickable ? { scale: 0.95 } : {}}
+              onClick={() => clickable && onSelectDate(d)}
+              disabled={!clickable}
+              className={getDateClasses(d, isCurrentMonth, past, isSelected, today)}
             >
               {d.getDate()}
-              {available && !past && isCurrentMonth && (
-                <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${
-                  isSelected ? "bg-primary-foreground" : "bg-primary"
-                }`} />
+              
+              {/* Indicateurs de disponibilité */}
+              {isCurrentMonth && !past && (hasBlue || hasPink) && (
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+                  {hasBlue && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      isSelected && color === "blue" ? "bg-white" : "bg-blue-500"
+                    }`} />
+                  )}
+                  {hasPink && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      isSelected && color === "pink" ? "bg-white" : "bg-pink-500"
+                    }`} />
+                  )}
+                </div>
               )}
-              {today && !available && (
+              
+              {today && !hasBlue && !hasPink && isCurrentMonth && (
                 <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary/50" />
               )}
             </motion.button>
           );
         })}
+      </div>
+
+      {/* Légende des couleurs */}
+      <div className="mt-4 pt-4 border-t border-border flex items-center justify-center gap-6">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <span className="text-xs text-muted-foreground">Créneaux disponibles</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-pink-500" />
+          <span className="text-xs text-muted-foreground">Activités à financer</span>
+        </div>
       </div>
     </div>
   );
