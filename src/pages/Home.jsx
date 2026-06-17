@@ -132,8 +132,7 @@ export default function Home() {
                   </p>
                   <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
                     Le paiement effectué dans le cadre de cette réservation ne garantit aucunement 
-                    une quelconque prestation, service ou résultat de la part d'Émilie. Ce paiement est 
-                    un soutien volontaire au projet, sans contrepartie obligatoire.
+                    une quelconque prestation, service ou résultat de la part d'Emilie. Âme pauvre n'a qu'à s'abstenir.
                   </p>
                 </div>
               </div>
