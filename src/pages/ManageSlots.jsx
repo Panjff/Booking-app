@@ -155,10 +155,12 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
         </div>
       )}
 
-      <form onSubmit={handleAddFunding} className="space-y-3">
+      <form onSubmit={handleAddFunding} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Nom de l'activité</Label>
+            <Label className="text-xs font-semibold flex items-center gap-1">
+              <Target className="w-3 h-3 text-primary" /> Nom de l'activité
+            </Label>
             <Input
               type="text"
               value={activityName}
@@ -198,13 +200,21 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
             />
           </div>
         </div>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="rounded-xl font-semibold w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4 mr-2" /> Ajouter un financement
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="rounded-xl font-semibold flex-1"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Plus className="w-4 h-4 mr-2" /> Ajouter
+              </>
+            )}
+          </Button>
+        </div>
       </form>
 
       {fundings.length > 0 && (

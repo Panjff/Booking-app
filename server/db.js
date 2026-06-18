@@ -15,6 +15,7 @@ const defaultDb = () => ({
   timeSlots: [],
   appointments: [],
   resetTokens: [],
+  fundings: [],
 });
 
 function ensureDataDir() {
@@ -66,6 +67,15 @@ function createTables() {
       userId TEXT NOT NULL,
       token TEXT NOT NULL PRIMARY KEY,
       expiresAt TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS fundings (
+      id TEXT PRIMARY KEY,
+      activity_name TEXT NOT NULL,
+      amount REAL NOT NULL DEFAULT 0,
+      goal REAL NOT NULL,
+      is_funded INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL
     );
   `);
 }
@@ -154,6 +164,10 @@ function mapRows() {
     })),
     appointments: sqlite.prepare("SELECT * FROM appointments").all(),
     resetTokens: sqlite.prepare("SELECT * FROM resetTokens").all(),
+    fundings: sqlite.prepare("SELECT * FROM fundings").all().map((f) => ({
+      ...f,
+      is_funded: Boolean(f.is_funded),
+    })),
   };
 }
 
@@ -196,6 +210,10 @@ function writeDb(data) {
     INSERT INTO resetTokens (userId, token, expiresAt)
     VALUES (@userId, @token, @expiresAt)
   `);
+  const insertFunding = sqlite.prepare(`
+    INSERT INTO fundings (id, activity_name, amount, goal, is_funded, createdAt)
+    VALUES (@id, @activity_name, @amount, @goal, @is_funded, @createdAt)
+  `);
 
   const persist = sqlite.transaction(() => {
     replaceTable("users", nextData.users, insertUser);
@@ -216,6 +234,12 @@ function writeDb(data) {
       notes: appointment.notes || "",
     }));
     replaceTable("resetTokens", nextData.resetTokens, insertResetToken);
+    replaceTable("fundings", nextData.fundings || [], insertFunding, (f) => ({
+      ...f,
+      amount: Number(f.amount) || 0,
+      goal: Number(f.goal) || 0,
+      is_funded: f.is_funded ? 1 : 0,
+    }));
   });
 
   persist();
