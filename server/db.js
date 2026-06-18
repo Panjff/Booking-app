@@ -72,6 +72,9 @@ function createTables() {
     CREATE TABLE IF NOT EXISTS fundings (
       id TEXT PRIMARY KEY,
       activity_name TEXT NOT NULL,
+      date TEXT NOT NULL,
+      time TEXT NOT NULL,
+      price REAL NOT NULL DEFAULT 0,
       amount REAL NOT NULL DEFAULT 0,
       goal REAL NOT NULL,
       is_funded INTEGER NOT NULL DEFAULT 0,
@@ -211,8 +214,8 @@ function writeDb(data) {
     VALUES (@userId, @token, @expiresAt)
   `);
   const insertFunding = sqlite.prepare(`
-    INSERT INTO fundings (id, activity_name, amount, goal, is_funded, createdAt)
-    VALUES (@id, @activity_name, @amount, @goal, @is_funded, @createdAt)
+    INSERT INTO fundings (id, activity_name, date, time, price, amount, goal, is_funded, createdAt)
+    VALUES (@id, @activity_name, @date, @time, @price, @amount, @goal, @is_funded, @createdAt)
   `);
 
   const persist = sqlite.transaction(() => {
@@ -236,6 +239,9 @@ function writeDb(data) {
     replaceTable("resetTokens", nextData.resetTokens, insertResetToken);
     replaceTable("fundings", nextData.fundings || [], insertFunding, (f) => ({
       ...f,
+      date: f.date || "",
+      time: f.time || "",
+      price: Number(f.price) || 0,
       amount: Number(f.amount) || 0,
       goal: Number(f.goal) || 0,
       is_funded: f.is_funded ? 1 : 0,

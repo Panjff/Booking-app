@@ -219,29 +219,28 @@ app.get("/api/fundings", (_req, res) => {
 });
 
 app.post("/api/fundings", authMiddleware, (req, res) => {
-  const { activity_name, amount, goal } = req.body;
+  const { activity_name, date, time, price } = req.body;
   if (!activity_name || !activity_name.trim()) {
     return res.status(400).json({ error: "Nom de l'activité requis" });
   }
-  const parsedGoal = parseFloat(goal);
-  if (!parsedGoal || parsedGoal < 10 || parsedGoal > 1000000) {
-    return res.status(400).json({ error: "L'objectif doit être entre 10 et 1 000 000 €" });
+  if (!date || !time) {
+    return res.status(400).json({ error: "Date et heure requises" });
   }
-  const parsedAmount = parseFloat(amount) || 0;
-  if (parsedAmount < 0) {
-    return res.status(400).json({ error: "Le montant ne peut pas être négatif" });
-  }
-  if (parsedAmount > parsedGoal) {
-    return res.status(400).json({ error: "Le montant collecté ne peut pas dépasser l'objectif" });
+  const parsedPrice = parseFloat(price);
+  if (isNaN(parsedPrice) || parsedPrice < 0) {
+    return res.status(400).json({ error: "Prix invalide" });
   }
 
   const data = db.read();
   const funding = {
     id: newId(),
     activity_name: activity_name.trim(),
-    amount: parsedAmount,
-    goal: parsedGoal,
-    is_funded: parsedAmount >= parsedGoal,
+    date,
+    time,
+    price: parsedPrice,
+    amount: 0,
+    goal: parsedPrice,
+    is_funded: false,
     createdAt: new Date().toISOString(),
   };
 
@@ -258,10 +257,15 @@ app.put("/api/fundings/:id", authMiddleware, (req, res) => {
   const funding = data.fundings.find((f) => f.id === req.params.id);
   if (!funding) return res.status(404).json({ error: "Financement introuvable" });
 
-  const { activity_name, amount, goal } = req.body;
+  const { activity_name, date, time, price, amount } = req.body;
   if (activity_name !== undefined) funding.activity_name = activity_name.trim();
+  if (date !== undefined) funding.date = date;
+  if (time !== undefined) funding.time = time;
+  if (price !== undefined) {
+    funding.price = parseFloat(price) || 0;
+    funding.goal = funding.price;
+  }
   if (amount !== undefined) funding.amount = parseFloat(amount) || 0;
-  if (goal !== undefined) funding.goal = parseFloat(goal) || 0;
   funding.is_funded = funding.amount >= funding.goal;
 
   db.write(data);

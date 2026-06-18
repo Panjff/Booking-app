@@ -75,64 +75,45 @@ function ShareLinkCard() {
 
 function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isLoading }) {
   const [activityName, setActivityName] = useState("");
-  const [fundingAmount, setFundingAmount] = useState("0");
-  const [fundingGoal, setFundingGoal] = useState("500");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [price, setPrice] = useState("50");
+
+  const today = format(new Date(), "yyyy-MM-dd");
 
   const handleAddFunding = (e) => {
     e.preventDefault();
-    
-    // Valider le nom
     if (!activityName.trim()) {
       toast.error("Veuillez entrer un nom d'activité.");
       return;
     }
-    
-    // Convertir en nombres
-    const amount = Number.parseFloat(fundingAmount) || 0;
-    const goal = Number.parseFloat(fundingGoal) || 0;
-    
-    // Valider l'objectif
-    if (goal < 10 || goal > 1000000) {
-      toast.error("L'objectif doit être entre 10 et 1 000 000 €.");
+    if (!date || !time) {
+      toast.error("Veuillez sélectionner une date et une heure.");
       return;
     }
-    
-    // Valider le montant
-    if (amount < 0) {
-      toast.error("Le montant ne peut pas être négatif.");
-      return;
-    }
-    
-    if (amount > goal) {
-      toast.error("Le montant collecté ne peut pas dépasser l'objectif.");
-      return;
-    }
-    
-    // Envoyer les données (SANS is_funded)
     onAddFunding({
       activity_name: activityName.trim(),
-      amount: amount,
-      goal: goal,
+      date,
+      time,
+      price: parseFloat(price) || 50,
     });
-    
-    // Réinitialiser le formulaire
     setActivityName("");
-    setFundingAmount("0");
-    setFundingGoal("500");
+    setTime("");
   };
 
-  const totalFunded = fundings.reduce((sum, f) => sum + f.amount, 0);
-  const totalGoal = fundings.reduce((sum, f) => sum + f.goal, 0);
-  const progress = totalGoal > 0 ? (totalFunded / totalGoal) * 100 : 0;
+  const totalCollected = fundings.reduce((sum, f) => sum + (f.amount || 0), 0);
+  const totalGoal = fundings.reduce((sum, f) => sum + (f.goal || f.price || 0), 0);
+  const progress = totalGoal > 0 ? (totalCollected / totalGoal) * 100 : 0;
 
   return (
     <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
       <h2 className="font-bold text-foreground flex items-center gap-2">
         <Target className="w-4 h-4 text-primary" /> Financement d'activités
       </h2>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-accent/30 rounded-xl p-3 text-center">
-          <p className="text-xl font-extrabold text-primary">€{totalFunded}</p>
+          <p className="text-xl font-extrabold text-primary">€{totalCollected}</p>
           <p className="text-xs text-muted-foreground">Collecté</p>
         </div>
         <div className="bg-accent/30 rounded-xl p-3 text-center">
@@ -144,7 +125,7 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
       {totalGoal > 0 && (
         <div className="space-y-1">
           <div className="w-full bg-muted rounded-full h-2.5">
-            <div 
+            <div
               className="bg-primary h-2.5 rounded-full transition-all duration-500"
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
@@ -156,7 +137,7 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
       )}
 
       <form onSubmit={handleAddFunding} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold flex items-center gap-1">
               <Target className="w-3 h-3 text-primary" /> Nom de l'activité
@@ -172,38 +153,51 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold flex items-center gap-1">
-              <DollarSign className="w-3 h-3 text-primary" /> Montant collecté (€)
+              <Calendar className="w-3 h-3 text-primary" /> Date
             </Label>
             <Input
-              type="number"
-              value={fundingAmount}
-              min="0"
-              step="1"
-              onChange={(e) => setFundingAmount(e.target.value)}
-              className="rounded-xl"
+              type="date"
+              value={date}
+              min={today}
+              onChange={(e) => setDate(e.target.value)}
               required
+              className="rounded-xl"
             />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold flex items-center gap-1">
-              <Target className="w-3 h-3 text-primary" /> Objectif (€)
+              <Clock className="w-3 h-3 text-primary" /> Heure
+            </Label>
+            <select
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+              className="w-full h-10 px-3 rounded-xl border border-input bg-background text-sm"
+            >
+              <option value="">Choisir une heure...</option>
+              {TIME_SUGGESTIONS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold flex items-center gap-1">
+              <DollarSign className="w-3 h-3 text-primary" /> Prix (€)
             </Label>
             <Input
               type="number"
-              value={fundingGoal}
-              min="10"
-              max="1000000"
-              step="10"
-              onChange={(e) => setFundingGoal(e.target.value)}
+              value={price}
+              min="0"
+              step="5"
+              onChange={(e) => setPrice(e.target.value)}
               className="rounded-xl"
-              required
             />
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !activityName.trim() || !date || !time}
             className="rounded-xl font-semibold flex-1"
           >
             {isLoading ? (
@@ -222,7 +216,7 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
           <h4 className="text-sm font-semibold text-muted-foreground">Financements en cours</h4>
           <div className="space-y-2">
             {fundings.map((funding) => {
-              const progress = funding.goal > 0 ? (funding.amount / funding.goal) * 100 : 0;
+              const fundingProgress = funding.goal > 0 ? (funding.amount / funding.goal) * 100 : 0;
               return (
                 <div
                   key={funding.id}
@@ -231,13 +225,14 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
                   <div>
                     <p className="font-semibold text-sm">{funding.activity_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      €{funding.amount} / €{funding.goal} 
-                      {funding.goal > 0 && ` (${Math.min(progress, 100).toFixed(1)}%)`}
+                      {funding.date && funding.time ? `${funding.date} à ${funding.time} — ` : ""}
+                      €{funding.amount || 0} / €{funding.goal || funding.price || 0}
+                      {funding.goal > 0 && ` (${Math.min(fundingProgress, 100).toFixed(1)}%)`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={`text-[10px] ${funding.amount >= funding.goal ? 'bg-green-500/20 text-green-700' : 'bg-primary/10 text-primary'}`}>
-                      {funding.amount >= funding.goal ? '✅ Financé' : 'En cours'}
+                    <Badge className={`text-[10px] ${funding.amount >= funding.goal ? "bg-green-500/20 text-green-700" : "bg-primary/10 text-primary"}`}>
+                      {funding.amount >= funding.goal ? "✅ Financé" : "En cours"}
                     </Badge>
                     <Button
                       variant="ghost"
