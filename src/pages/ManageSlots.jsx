@@ -101,40 +101,11 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
     setTime("");
   };
 
-  const totalCollected = fundings.reduce((sum, f) => sum + (f.amount || 0), 0);
-  const totalGoal = fundings.reduce((sum, f) => sum + (f.goal || f.price || 0), 0);
-  const progress = totalGoal > 0 ? (totalCollected / totalGoal) * 100 : 0;
-
   return (
     <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
       <h2 className="font-bold text-foreground flex items-center gap-2">
-        <Target className="w-4 h-4 text-primary" /> Financement d'activités
+        <Target className="w-4 h-4 text-primary" /> Choisir la dépense à mettre et le jour
       </h2>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-accent/30 rounded-xl p-3 text-center">
-          <p className="text-xl font-extrabold text-primary">€{totalCollected}</p>
-          <p className="text-xs text-muted-foreground">Collecté</p>
-        </div>
-        <div className="bg-accent/30 rounded-xl p-3 text-center">
-          <p className="text-xl font-extrabold text-foreground">€{totalGoal}</p>
-          <p className="text-xs text-muted-foreground">Objectif total</p>
-        </div>
-      </div>
-
-      {totalGoal > 0 && (
-        <div className="space-y-1">
-          <div className="w-full bg-muted rounded-full h-2.5">
-            <div
-              className="bg-primary h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(progress, 100)}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground text-right">
-            {Math.min(progress, 100).toFixed(1)}% atteint
-          </p>
-        </div>
-      )}
 
       <form onSubmit={handleAddFunding} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -182,7 +153,7 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold flex items-center gap-1">
-              <DollarSign className="w-3 h-3 text-primary" /> Prix (€)
+              <DollarSign className="w-3 h-3 text-primary" /> Montant (€)
             </Label>
             <Input
               type="number"
@@ -213,10 +184,9 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
 
       {fundings.length > 0 && (
         <div className="space-y-2 mt-2">
-          <h4 className="text-sm font-semibold text-muted-foreground">Financements en cours</h4>
+          <h4 className="text-sm font-semibold text-muted-foreground">Dépenses en cours</h4>
           <div className="space-y-2">
             {fundings.map((funding) => {
-              const fundingProgress = funding.goal > 0 ? (funding.amount / funding.goal) * 100 : 0;
               return (
                 <div
                   key={funding.id}
@@ -226,14 +196,10 @@ function ActivityFundingCard({ onAddFunding, onDeleteFunding, fundings = [], isL
                     <p className="font-semibold text-sm">{funding.activity_name}</p>
                     <p className="text-xs text-muted-foreground">
                       {funding.date && funding.time ? `${funding.date} à ${funding.time} — ` : ""}
-                      €{funding.amount || 0} / €{funding.goal || funding.price || 0}
-                      {funding.goal > 0 && ` (${Math.min(fundingProgress, 100).toFixed(1)}%)`}
+                      €{funding.price || funding.goal || 0}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={`text-[10px] ${funding.amount >= funding.goal ? "bg-green-500/20 text-green-700" : "bg-primary/10 text-primary"}`}>
-                      {funding.amount >= funding.goal ? "✅ Financé" : "En cours"}
-                    </Badge>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -292,22 +258,21 @@ export default function ManageSlots() {
     onError: () => toast.error("Impossible de supprimer ce créneau."),
   });
 
-const createFundingMutation = useMutation({
-  mutationFn: (data) => {
-    console.log("📤 Envoi financement:", data);
-    return api.fundings.create(data);
-  },
-  onSuccess: (data) => {
-    console.log("✅ Financement créé:", data);
-    queryClient.invalidateQueries({ queryKey: ["fundings"] });
-    toast.success("Financement ajouté ! 🎯");
-  },
-  onError: (error) => {
-    console.error("❌ Erreur:", error);
-    // Afficher le message d'erreur détaillé
-    toast.error(`Impossible d'ajouter le financement: ${error.message}`);
-  },
-});
+  const createFundingMutation = useMutation({
+    mutationFn: (data) => {
+      console.log("📤 Envoi financement:", data);
+      return api.fundings.create(data);
+    },
+    onSuccess: (data) => {
+      console.log("✅ Financement créé:", data);
+      queryClient.invalidateQueries({ queryKey: ["fundings"] });
+      toast.success("Financement ajouté ! 🎯");
+    },
+    onError: (error) => {
+      console.error("❌ Erreur:", error);
+      toast.error(`Impossible d'ajouter le financement: ${error.message}`);
+    },
+  });
 
   const deleteFundingMutation = useMutation({
     mutationFn: (id) => api.fundings.delete(id),
@@ -421,7 +386,7 @@ const createFundingMutation = useMutation({
 
         <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
           <h2 className="font-bold text-foreground flex items-center gap-2">
-            <Plus className="w-4 h-4 text-primary" /> Ajouter un créneau
+            <Plus className="w-4 h-4 text-primary" /> Choisir le jour du date
           </h2>
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

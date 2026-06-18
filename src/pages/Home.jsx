@@ -314,7 +314,6 @@ function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFundin
       </h3>
       <div className="space-y-2">
         {fundings.map((funding) => {
-          const progress = funding.goal > 0 ? (funding.amount / funding.goal) * 100 : 0;
           const isSelected = selectedFunding?.id === funding.id;
           
           return (
@@ -330,20 +329,9 @@ function FundingPicker({ selectedDate, fundings, selectedFunding, onSelectFundin
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-sm">{funding.activity_name}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-muted-foreground">
-                      €{funding.amount} / €{funding.goal}
-                    </span>
-                    <div className="w-20 h-1.5 bg-muted rounded-full">
-                      <div 
-                        className="h-1.5 bg-blue-500 rounded-full transition-all"
-                        style={{ width: `${Math.min(progress, 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-semibold text-blue-600">
-                      {Math.min(progress, 100).toFixed(0)}%
-                    </span>
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    €{funding.price || funding.goal || 0}
+                  </p>
                 </div>
                 {isSelected && (
                   <Badge className="bg-blue-500 text-white">Sélectionné</Badge>
