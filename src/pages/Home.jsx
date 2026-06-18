@@ -70,6 +70,20 @@ export default function Home() {
     setSelectedSlot(null);
     setSelectedFunding(null);
     if (step !== STEPS.SELECT) setStep(STEPS.SELECT);
+    
+    // Vérifier si la date a des créneaux ou des financements
+    const dateStr = format(date, "yyyy-MM-dd");
+    const hasSlots = availableDates.has(dateStr);
+    const hasFundings = fundingDates.has(dateStr);
+    
+    // Si les deux sont disponibles, on garde le choix actuel de l'utilisateur
+    // Sinon, on bascule automatiquement sur le seul disponible
+    if (hasSlots && !hasFundings) {
+      setBookingType(BOOKING_TYPES.SLOT);
+    } else if (!hasSlots && hasFundings) {
+      setBookingType(BOOKING_TYPES.FUNDING);
+    }
+    // Si les deux sont disponibles, on ne change pas le bookingType
   };
 
   const handleFormSubmit = (info) => {
@@ -94,6 +108,10 @@ export default function Home() {
     setCreatedAppointment(null);
     setBookingType(BOOKING_TYPES.SLOT);
   };
+
+  // Déterminer ce qui est disponible pour la date sélectionnée
+  const hasSlotsOnSelected = dateStr ? availableDates.has(dateStr) : false;
+  const hasFundingsOnSelected = dateStr ? fundingDates.has(dateStr) : false;
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,32 +161,48 @@ export default function Home() {
                 <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => setBookingType(BOOKING_TYPES.SLOT)}
+                      onClick={() => {
+                        setBookingType(BOOKING_TYPES.SLOT);
+                        // Si un financement était sélectionné, on le désélectionne
+                        if (selectedFunding) setSelectedFunding(null);
+                      }}
                       className={`p-3 rounded-xl border-2 transition-all ${
                         bookingType === BOOKING_TYPES.SLOT
                           ? "border-pink-500 bg-pink-50 dark:bg-pink-950/20"
                           : "border-border hover:border-pink-300"
-                      }`}
+                      } ${!hasSlotsOnSelected && selectedDate ? "opacity-50 cursor-not-allowed" : ""}`}
+                      disabled={!hasSlotsOnSelected && !!selectedDate}
                     >
                       <div className="flex items-center justify-center gap-2">
                         <Calendar className="w-4 h-4 text-pink-500" />
                         <span className="font-semibold text-sm">Jour pour un date</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Réserver un créneau</p>
+                      {selectedDate && !hasSlotsOnSelected && (
+                        <p className="text-xs text-red-500 mt-1">Aucun créneau</p>
+                      )}
                     </button>
                     <button
-                      onClick={() => setBookingType(BOOKING_TYPES.FUNDING)}
+                      onClick={() => {
+                        setBookingType(BOOKING_TYPES.FUNDING);
+                        // Si un créneau était sélectionné, on le désélectionne
+                        if (selectedSlot) setSelectedSlot(null);
+                      }}
                       className={`p-3 rounded-xl border-2 transition-all ${
                         bookingType === BOOKING_TYPES.FUNDING
                           ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
                           : "border-border hover:border-blue-300"
-                      }`}
+                      } ${!hasFundingsOnSelected && selectedDate ? "opacity-50 cursor-not-allowed" : ""}`}
+                      disabled={!hasFundingsOnSelected && !!selectedDate}
                     >
                       <div className="flex items-center justify-center gap-2">
                         <Target className="w-4 h-4 text-blue-500" />
                         <span className="font-semibold text-sm">Financer mon train de vie</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Soutenir un projet</p>
+                      {selectedDate && !hasFundingsOnSelected && (
+                        <p className="text-xs text-red-500 mt-1">Aucune activité</p>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -235,6 +269,11 @@ export default function Home() {
                         : "Sélectionnez une date et une activité à financer !"
                       }
                     </p>
+                    {selectedDate && hasSlotsOnSelected && hasFundingsOnSelected && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        💡 Cette date a des créneaux ET des activités à financer
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
